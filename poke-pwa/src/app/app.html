@@ -1,0 +1,50 @@
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-brand">
+      <a routerLink="/pokemon" class="topbar-logo">
+        <span class="pokeball-icon">🔴</span>
+        <div class="brand-text">
+          <strong>Pokédex PWA</strong>
+          <span>PokeAPI & Push</span>
+        </div>
+      </a>
+    </div>
+
+    <nav class="topbar-nav">
+      <a routerLink="/pokemon" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
+        Poke chat gtp
+      </a>
+      <a routerLink="/push-test" routerLinkActive="active">
+        Notificaciones Push
+      </a>
+      <a routerLink="/acerca" routerLinkActive="active">
+        Acerca
+      </a>
+    </nav>
+
+    <div class="topbar-extras">
+      <!-- Indicador Online / Offline -->
+      <span class="status-pill" [class.offline]="!network.isOnline()">
+        <span class="dot"></span>
+        {{ network.isOnline() ? 'En línea' : 'Offline' }}
+      </span>
+
+      <!-- Botón campana rápida de push -->
+      @if (push.isSupported) {
+      <button type="button" class="bell-btn" [class.active]="push.enabled()"
+        [title]="push.enabled() ? 'Notificaciones activas' : 'Activar notificaciones'" (click)="togglePush()"
+        [disabled]="push.loading()">
+        {{ push.enabled() ? '🔔' : '🔕' }}
+      </button>
+      }
+    </div>
+  </div>
+</header>
+
+<main class="main-shell">
+  <router-outlet></router-outlet>
+</main>
+
+<footer class="app-footer">
+  <p>PWA Pokédex desarrollada con Angular, Service Workers (ngsw) y Web Push API para evaluación de desempeño.</p>
+</footer>

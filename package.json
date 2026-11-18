@@ -1,0 +1,15 @@
+{
+  "name": "pwa-pokedex-project",
+  "version": "1.0.0",
+  "description": "Pokédex PWA con soporte Offline y Push Notifications",
+  "scripts": {
+    "pwa": "npm run pwa --prefix poke-pwa",
+    "build": "npm run build --prefix poke-pwa",
+    "serve:pwa": "npm run serve:pwa --prefix poke-pwa",
+    "server": "npm start --prefix push-server",
+    "start": "npm run pwa --prefix poke-pwa"
+  },
+  "keywords": ["pwa", "angular", "service-worker", "push-notifications", "pokeapi"],
+  "author": "",
+  "license": "ISC"
+}

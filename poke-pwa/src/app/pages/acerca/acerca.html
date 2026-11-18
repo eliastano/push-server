@@ -1,0 +1,132 @@
+<div class="page-container">
+  <!-- Hero Header -->
+  <section class="about-hero">
+    <div class="about-header-content">
+      <span class="tag-pill">🔴 Evaluación de Desempeño PWA</span>
+      <h1 class="about-title">Arquitectura Pokédex PWA & Web Push</h1>
+      <p class="about-subtitle">
+        Aplicación Web Progresiva construida con Angular 22, Service Workers con caché offline para PokéAPI REST y notificaciones Push mediante VAPID.
+      </p>
+
+      <!-- Interactive Worker Card -->
+      <div class="sw-tester-card">
+        <div class="sw-info">
+          <span class="sw-indicator-dot"></span>
+          <div>
+            <h4>{{ swStatus() }}</h4>
+            <p>Estrategias de Caché: Data Groups (Freshness & Performance) + Asset Groups</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-check-sw"
+          [disabled]="isInspecting()"
+          (click)="testWorker()"
+        >
+          {{ isInspecting() ? 'Comprobando...' : 'Verificar Service Worker' }}
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pila Tecnológica -->
+  <main class="tech-section">
+    <div class="section-title-wrap">
+      <span class="tag-pill">Pila Tecnológica</span>
+      <h2>Fundamentos de la Plataforma</h2>
+      <p>Componentes y estándares que conforman esta entrega de desempeño.</p>
+    </div>
+
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="tech-icon-box">🔴</div>
+        <h3>PokéAPI REST v2</h3>
+        <p>Consumo de datos públicos de Pokémon (detalles, estadísticas, habilidades y sprites oficiales) mediante HttpClient.</p>
+        <span class="tech-badge">API REST Pública</span>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-icon-box">⚙️</div>
+        <h3>Angular Service Worker</h3>
+        <p>Políticas en <code>ngsw-config.json</code> para cachear endpoints con <code>freshness</code> y sprites con <code>performance</code>.</p>
+        <span class="tech-badge">Data & Asset Groups</span>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-icon-box">🔔</div>
+        <h3>Web Push & SwPush</h3>
+        <p>Módulo oficial <code>SwPush</code> para gestionar suscripciones push en el cliente con autenticación VAPID.</p>
+        <span class="tech-badge">Push Notifications</span>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-icon-box">🖥️</div>
+        <h3>Push Server Backend</h3>
+        <p>Servidor Node.js + Express con librería <code>web-push</code>, endpoints <code>/api/subscribe</code> y <code>/api/push</code>.</p>
+        <span class="tech-badge">VAPID Backend</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- Pasos de la práctica -->
+  <section class="lifecycle-section">
+    <div class="section-title-wrap">
+      <span class="tag-pill">Cumplimiento del Desempeño</span>
+      <h2>Pasos Desarrollados</h2>
+    </div>
+
+    <div class="flow-steps-grid">
+      <div class="flow-step">
+        <span class="step-num">P1</span>
+        <h4>Inicialización PWA</h4>
+        <p>Proyecto Angular standalone, rutas independientes, manifiesto <code>manifest.webmanifest</code> e iconos responsivos.</p>
+      </div>
+
+      <div class="flow-step">
+        <span class="step-num">P2</span>
+        <h4>Consumo PokeAPI</h4>
+        <p>Servicio <code>PokemonService</code> con <code>HttpClient</code> para listar y detallar Pokémon con tipos y estadísticas.</p>
+      </div>
+
+      <div class="flow-step">
+        <span class="step-num">P3</span>
+        <h4>Caché Offline</h4>
+        <p>Data Groups en <code>ngsw-config.json</code> para peticiones REST y sprites de GitHub, permitiendo navegación 100% offline.</p>
+      </div>
+
+      <div class="flow-step">
+        <span class="step-num">P4-5</span>
+        <h4>Push Server & SwPush</h4>
+        <p>Servidor Express con VAPID, registro de suscripciones y panel para disparar notificaciones hacia los dispositivos.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive FAQ Accordion -->
+  <section class="faq-section">
+    <div class="section-title-wrap">
+      <span class="tag-pill">Preguntas Frecuentes</span>
+      <h2>Verificación de Funcionamiento</h2>
+    </div>
+
+    <div class="faq-list">
+      @for (faq of faqs(); track faq.id) {
+        <div class="faq-item" [class.open]="faq.isOpen">
+          <button
+            type="button"
+            class="faq-question"
+            (click)="toggleFaq(faq.id)"
+          >
+            <span>{{ faq.question }}</span>
+            <span class="faq-toggle-icon">{{ faq.isOpen ? '−' : '+' }}</span>
+          </button>
+          @if (faq.isOpen) {
+            <div class="faq-answer">
+              <p>{{ faq.answer }}</p>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </section>
+</div>

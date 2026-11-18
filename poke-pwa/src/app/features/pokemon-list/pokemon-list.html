@@ -1,0 +1,285 @@
+<div class="poke-container">
+
+  <!-- Banner de estado de conexión (Offline / Online) -->
+  @if (!network.isOnline()) {
+    <div class="offline-banner">
+      <span class="banner-icon">⚡</span>
+      <div class="banner-text">
+        <strong>Modo sin conexión (Offline)</strong>
+        <span>Navegando con datos de PokéAPI y assets cacheados por el Service Worker.</span>
+      </div>
+    </div>
+  }
+
+  <!-- Barra de Notificaciones Push y Service Worker -->
+  <section class="push-card">
+    <div class="push-info">
+      <div class="push-status-dot" [class.active]="network.swActive()"></div>
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <strong>Service Worker & Notificaciones Push</strong>
+          <span class="badge" [style.background-color]="network.swActive() ? '#10b981' : '#f59e0b'">
+            {{ network.swActive() ? 'SW Activo' : 'Cargando SW...' }}
+          </span>
+          @if (network.cacheStats().totalCachedEntries > 0) {
+            <span class="badge" style="background-color: #0284c7;">
+              📦 {{ network.cacheStats().totalCachedEntries }} recursos en CacheStorage
+            </span>
+          }
+        </div>
+        <p class="push-subtitle">
+          @if (!network.swActive()) {
+            <span>Iniciando Service Worker para almacenamiento en caché offline...</span>
+          } @else if (push.enabled()) {
+            <span>✅ Service Worker activo y suscrito a notificaciones Push en este dispositivo.</span>
+          } @else {
+            <span>✅ Service Worker activo (Caché PokeAPI y assets lista). Activa las alertas Push si deseas.</span>
+          }
+        </p>
+      </div>
+    </div>
+    <div class="push-actions">
+      @if (push.isSupported) {
+        @if (!push.enabled()) {
+          <button class="btn btn-primary" (click)="push.subscribe()" [disabled]="push.loading()">
+            🔔 Activar Notificaciones
+          </button>
+        } @else {
+          <button class="btn btn-outline-danger" (click)="push.unsubscribe()" [disabled]="push.loading()">
+            🔕 Desactivar
+          </button>
+        }
+      }
+      <a routerLink="/push-test" class="btn btn-secondary">
+        🚀 Panel Push Completo
+      </a>
+    </div>
+  </section>
+
+  @if (push.lastResult()) {
+    <div class="alert-box">
+      <span>{{ push.lastResult() }}</span>
+    </div>
+  }
+
+  <!-- Barra de Búsqueda y Filtros -->
+  <section class="controls-section">
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        placeholder="Buscar por nombre o número (ej. Pikachu o #025)..."
+        [value]="searchTerm()"
+        (input)="setSearchTerm($any($event.target).value)"
+        class="search-input"
+      />
+      @if (searchTerm()) {
+        <button class="clear-btn" (click)="setSearchTerm('')">✕</button>
+      }
+    </div>
+
+    <!-- Chips de tipos elementales -->
+    <div class="type-chips">
+      @for (type of availableTypes; track type) {
+        <button
+          class="type-chip"
+          [class.active]="selectedType() === type"
+          [style.--chip-color]="getTypeColor(type)"
+          (click)="setTypeFilter(type)"
+        >
+          {{ type === 'all' ? 'Todos los Tipos' : (type | uppercase) }}
+        </button>
+      }
+    </div>
+  </section>
+
+  <!-- Estado de Carga Inicial -->
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="pokeball-spinner"></div>
+      <p>Consultando PokéAPI REST y cargando datos...</p>
+    </div>
+  }
+
+  <!-- Mensaje de Error -->
+  @if (error()) {
+    <div class="error-state">
+      <p>{{ error() }}</p>
+      <button class="btn btn-primary" (click)="loadPokemons()">Reintentar</button>
+    </div>
+  }
+
+  <!-- Grid de Pokémon -->
+  @if (!loading() && !error()) {
+    @if (filteredPokemons().length === 0) {
+      <div class="empty-state">
+        <p>No se encontraron Pokémon con los filtros seleccionados.</p>
+      </div>
+    } @else {
+      <div class="pokemon-grid">
+        @for (poke of filteredPokemons(); track poke.id) {
+          <article
+            class="poke-card"
+            (click)="openDetail(poke)"
+            [style.--card-accent]="poke.types && poke.types[0] ? getTypeColor(poke.types[0]) : '#e11d48'"
+          >
+            <div class="poke-card-header">
+              <span class="poke-id">{{ formatId(poke.id) }}</span>
+            </div>
+
+            <div class="poke-image-wrapper">
+              <img
+                [src]="poke.image"
+                [alt]="poke.name"
+                loading="lazy"
+                (error)="$any($event.target).src = pokeService.getSpriteUrl(poke.id)"
+              />
+            </div>
+
+            <h3 class="poke-name">{{ poke.name | titlecase }}</h3>
+
+            @if (poke.types && poke.types.length > 0) {
+              <div class="poke-types">
+                @for (t of poke.types; track t) {
+                  <span
+                    class="badge"
+                    [style.background-color]="getTypeColor(t)"
+                  >
+                    {{ t }}
+                  </span>
+                }
+              </div>
+            }
+
+            @if (poke.hp || poke.attack) {
+              <div class="poke-mini-stats">
+                <span><strong>HP:</strong> {{ poke.hp }}</span>
+                <span><strong>ATK:</strong> {{ poke.attack }}</span>
+                <span><strong>DEF:</strong> {{ poke.defense }}</span>
+              </div>
+            }
+
+            <div class="poke-card-footer">
+              <button class="btn-card-detail" (click)="$event.stopPropagation(); openDetail(poke)">
+                Ver Ficha
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+
+      <!-- Botón Cargar Más -->
+      @if (selectedType() === 'all' && !searchTerm()) {
+        <div class="load-more-wrapper">
+          <button
+            class="btn btn-load-more"
+            (click)="loadMore()"
+            [disabled]="loadingMore()"
+          >
+            @if (loadingMore()) {
+              <span>Cargando más...</span>
+            } @else {
+              <span>Cargar más Pokémon (+36)</span>
+            }
+          </button>
+        </div>
+      }
+    }
+  }
+
+  <!-- MODAL DE DETALLE DEL POKÉMON -->
+  @if (selectedPokemon(); as poke) {
+    <div class="modal-backdrop" (click)="closeDetail()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <button class="modal-close-btn" (click)="closeDetail()">✕</button>
+
+        <div class="modal-header" [style.background-color]="getTypeColor(poke.types[0].type.name)">
+          <div class="modal-title-row">
+            <h2>{{ poke.name | titlecase }}</h2>
+            <span class="modal-id">{{ formatId(poke.id) }}</span>
+          </div>
+
+          <div class="modal-artwork-container">
+            <img
+              [src]="showShiny()
+                ? (poke.sprites.other?.['official-artwork']?.front_shiny || poke.sprites.front_shiny || poke.sprites.front_default)
+                : (poke.sprites.other?.['official-artwork']?.front_default || poke.sprites.front_default)"
+              [alt]="poke.name"
+            />
+          </div>
+
+          <div class="shiny-toggle-row">
+            <button class="shiny-btn" [class.active]="showShiny()" (click)="toggleShiny()">
+              ✨ {{ showShiny() ? 'Forma Normal' : 'Ver Variocolor (Shiny)' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-body">
+          <!-- Tipos -->
+          <div class="modal-types">
+            @for (t of poke.types; track t.type.name) {
+              <span class="badge large" [style.background-color]="getTypeColor(t.type.name)">
+                {{ t.type.name | uppercase }}
+              </span>
+            }
+          </div>
+
+          <!-- Medidas Físicas -->
+          <div class="physical-grid">
+            <div class="stat-pill">
+              <span class="label">Altura</span>
+              <span class="value">{{ poke.height / 10 }} m</span>
+            </div>
+            <div class="stat-pill">
+              <span class="label">Peso</span>
+              <span class="value">{{ poke.weight / 10 }} kg</span>
+            </div>
+            <div class="stat-pill">
+              <span class="label">Exp. Base</span>
+              <span class="value">{{ poke.base_experience }} XP</span>
+            </div>
+          </div>
+
+          <!-- Estadísticas Base -->
+          <div class="stats-section">
+            <h4>Estadísticas Base</h4>
+            @for (s of poke.stats; track s.stat.name) {
+              <div class="stat-row">
+                <span class="stat-name">{{ s.stat.name | uppercase }}</span>
+                <span class="stat-val">{{ s.base_stat }}</span>
+                <div class="stat-bar-bg">
+                  <div
+                    class="stat-bar-fill"
+                    [style.width.%]="(s.base_stat / 255) * 100"
+                    [style.background-color]="getTypeColor(poke.types[0].type.name)"
+                  ></div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Habilidades -->
+          <div class="abilities-section">
+            <h4>Habilidades</h4>
+            <div class="abilities-tags">
+              @for (a of poke.abilities; track a.ability.name) {
+                <span class="ability-tag" [class.hidden]="a.is_hidden">
+                  {{ a.ability.name | titlecase }} {{ a.is_hidden ? '(Oculta)' : '' }}
+                </span>
+              }
+            </div>
+          </div>
+
+          <!-- Acción Push directa desde el Pokémon -->
+          <div class="modal-push-action">
+            <button class="btn btn-push-poke" (click)="sendQuickPush(poke.name)">
+              📡 Disparar Notificación Push de {{ poke.name | titlecase }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>
